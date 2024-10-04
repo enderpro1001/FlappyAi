@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot - FlappyAI</title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        .chatbot-container {
+            width: 100%;
+            max-width: 500px;
+            margin: 50px auto;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        #chatbox {
+            height: 400px;
+            overflow-y: auto;
+            padding: 20px;
+            background-color: #fff;
+            border-bottom: 1px solid #ddd;
+        }
+
+        #messages {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .user-message {
+            background-color: #dcf8c6;
+            align-self: flex-end;
+        }
+
+        .bot-message {
+            background-color: #f1f0f0;
+            align-self: flex-start;
+        }
+
+        .user-input {
+            display: flex;
+            padding: 10px;
+            border-top: 1px solid #ddd;
+        }
+
+        input#userInput {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        button#sendBtn {
+            background-color: #007bff;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            margin-left: 10px;
+            cursor: pointer;
+        }
+
+            button#sendBtn:hover {
+                background-color: #0056b3;
+            }
+    </style>
+</head>
+<body>
+    <div class="chatbot-container">
+        <div id="chatbox">
+            <div id="messages"></div>
+        </div>
+        <div class="user-input">
+            <input type="text" id="userInput" placeholder="Type a message..." />
+            <button id="sendBtn" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('userInput').addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+        });
+
+        const chatbotName = "FlappyAI";
+        let reminders = [];
+        let userName = "";
+        let userProfile = { name: "", location: "", age: "", phoneNumber: "" };
+        const NEWS_API_KEY = '50868622dbf04764a8a20706418e6ff8';
+        const WEATHER_API_KEY = 'f1470eb174bccafbcd509fbf2bcca896';
+        let isGameActive = false;
+        let currentGame = "";
+        let gameCycle = true; // Keeps track of switching games
+
+        function sendMessage() {
+            const userInput = document.getElementById('userInput').value;
+            if (userInput.trim() === "") return;
+
+            displayMessage(userInput, 'user');
+            processUserInput(userInput);
+            document.getElementById('userInput').value = '';
+        }
+
+        function displayMessage(message, sender) {
+            const messagesDiv = document.getElementById('messages');
+            const newMessage = document.createElement('div');
+            newMessage.classList.add('message');
+            newMessage.classList.add(sender === 'user' ? 'user-message' : 'bot-message');
+            newMessage.innerText = message;
+            messagesDiv.appendChild(newMessage);
+
+            // Auto scroll to the bottom after each message
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function processUserInput(input) {
+            input = input.toLowerCase();
+
+            if (isGameActive) {
+                handleGameInput(input);
+                return;
+            }
+
+            if (input.includes('hi') || input.includes('hello') || input.includes('hey')) {
+                respond("Hello! How can I assist you today?");
+            } else if (input.includes('how are you')) {
+                respond("I'm just a bunch of code, but thanks for asking! How about you?");
+            } else if (input.includes('what is your name')) {
+                respond(`My name is ${chatbotName}.`);
+            } else if (input.includes('thank you')) {
+                respond("You're welcome! Always happy to help.");
+            } else if (input.includes('bye') || input.includes('goodbye')) {
+                respond("Goodbye! Have a great day!");
+            } else if (input.includes('time')) {
+                respond(`The current time is ${new Date().toLocaleTimeString()}.`);
+            } else if (input.includes('date')) {
+                respond(`Today's date is ${new Date().toLocaleDateString()}.`);
+            } else if (input.includes('solve')) {
+                solveMath(input);
+            } else if (input.includes('news')) {
+                getNews(input);
+            } else if (input.includes('weather')) {
+                getWeather(input);
+            } else if (input.includes('tell me a story')) {
+                tellStory();
+            } else if (input.includes('my profile')) {
+                displayProfile();
+            } else if (input.includes('set my name to')) {
+                setName(input);
+            } else if (input.includes('set my location to')) {
+                setLocation(input);
+            } else if (input.includes('set my age to')) {
+                setAge(input);
+            } else if (input.includes('set my phone number to')) {
+                setPhoneNumber(input);
+            } else if (input.includes('play a game')) {
+                playGame();
+            } else if (input.includes('recommend')) {
+                giveRecommendation(input);
+            } else if (input.includes('joke')) {
+                tellJoke();
+            } else if (input.includes('fact')) {
+                tellFact();
+            } else if (input.includes('remind me to')) {
+                const reminder = input.replace('remind me to', '').trim();
+                reminders.push(reminder);
+                respond(`Reminder added: ${reminder}`);
+            } else if (input.includes('my reminders')) {
+                displayReminders();
+            } else if (input.includes('remove reminder')) {
+                removeReminder(input);
+            } else {
+                respond("I'm sorry, I didn't understand that.");
+            }
+        }
+
+        // Solve math
+        function solveMath(input) {
+            try {
+                const equation = input.replace('solve', '').trim();
+                const answer = eval(equation);
+                respond(`The answer is ${answer}`);
+            } catch {
+                respond("I couldn't solve that. Please provide a valid equation.");
+            }
+        }
+
+        // Fetch the news
+        function getNews(input) {
+            let query = 'general';
+            if (input.includes('category')) {
+                query = input.replace('news in category', '').trim();
+            }
+
+            fetch(`https://newsapi.org/v2/top-headlines?country=us&category=${query}&apiKey=${NEWS_API_KEY}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.articles && data.articles.length > 0) {
+                        respond(`Here are some top news headlines:\n${data.articles.slice(0, 3).map((article, index) => `${index + 1}. ${article.title}`).join('\n')}`);
+                    } else {
+                        respond("I couldn't fetch the news at the moment.");
+                    }
+                })
+                .catch(() => respond("There was an error fetching the news."));
+        }
+
+        // Fetch the weather
+        function getWeather(input) {
+            const location = input.replace('weather in', '').trim() || 'New York';
+            fetch(`https://api.openweathermap.org/data/2.5/weather?q=${location}&appid=${WEATHER_API_KEY}&units=metric`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.weather && data.weather.length > 0) {
+                        respond(`The weather in ${data.name} is currently ${data.weather[0].description} with a temperature of ${data.main.temp}°C.`);
+                    } else {
+                        respond("I couldn't fetch the weather right now.");
+                    }
+                })
+                .catch(() => respond("There was an error fetching the weather."));
+        }
+
+
+        // Tell a story
+        function tellStory() {
+            const story = `
+                        Once upon a time, in a small village, there were two friends, John and Sarah.
+                        They loved to explore the nearby forest. One day, they found a magical tree that granted them a wish.
+                        They wished for happiness for their village, and from that day on, everyone lived in peace and harmony.
+                        The moral of the story is: Happiness comes when you share joy with others.
+                    `;
+            respond(story);
+        }
+
+        // Play a game
+        function playGame() {
+            if (gameCycle) {
+                respond("Let's play Rock, Paper, Scissors! Type your choice (rock, paper, or scissors).");
+                currentGame = 'rps';
+            } else {
+                startGuessingGame();
+            }
+            isGameActive = true;
+            gameCycle = !gameCycle; // Toggle for next time
+        }
+
+        // Handle game input
+        function handleGameInput(input) {
+            if (currentGame === 'rps') {
+                playRockPaperScissors(input);
+            } else if (currentGame === 'guessing') {
+                handleGuessingGameInput(input);
+            }
+        }
+
+        // Play Rock, Paper, Scissors
+        function playRockPaperScissors(userChoice) {
+            const choices = ['rock', 'paper', 'scissors'];
+            const botChoice = choices[Math.floor(Math.random() * choices.length)];
+            respond(`I chose ${botChoice}`);
+
+            if (userChoice === botChoice) {
+                respond("It's a tie!");
+            } else if (
+                (userChoice === 'rock' && botChoice === 'scissors') ||
+                (userChoice === 'scissors' && botChoice === 'paper') ||
+                (userChoice === 'paper' && botChoice === 'rock')
+            ) {
+                respond("You win!");
+            } else {
+                respond("I win!");
+            }
+
+            isGameActive = false; // End game
+        }
+
+        // Start a number guessing game
+        let targetNumber = null;
+        let attempts = 0;
+
+        function startGuessingGame() {
+            targetNumber = Math.floor(Math.random() * 100) + 1;
+            respond("I've chosen a number between 1 and 100. Try to guess it!");
+            currentGame = "guessing";
+            attempts = 0;
+        }
+
+        function handleGuessingGameInput(input) {
+            const guess = parseInt(input);
+            if (isNaN(guess)) {
+                respond("Please enter a valid number.");
+                return;
+            }
+
+            attempts++;
+            if (guess === targetNumber) {
+                respond(`Congratulations! You guessed the number in ${attempts} attempts.`);
+                isGameActive = false; // End game
+                currentGame = "";
+            } else if (guess > targetNumber) {
+                respond("Too high! Try again.");
+            } else {
+                respond("Too low! Try again.");
+            }
+        }
+
+        // Tell a joke
+        function tellJoke() {
+            const jokes = [
+                "Why don't scientists trust atoms? Because they make up everything!",
+                "What do you call fake spaghetti? An impasta!",
+                "Why did the scarecrow win an award? Because he was outstanding in his field!"
+            ];
+            const randomJoke = jokes[Math.floor(Math.random() * jokes.length)];
+            respond(randomJoke);
+        }
+
+        // Tell a fact
+        function tellFact() {
+            const facts = [
+                "Honey never spoils. Archaeologists have found pots of honey in ancient Egyptian tombs that are over 3,000 years old and still perfectly edible.",
+                "A group of flamingos is called a 'flamboyance'.",
+                "Octopuses have three hearts. Two pump blood to the gills, while the third pumps it to the rest of the body."
+            ];
+            const randomFact = facts[Math.floor(Math.random() * facts.length)];
+            respond(randomFact);
+        }
+
+        // Give recommendations
+        function giveRecommendation(input) {
+            if (input.includes('book')) {
+                respond("I recommend reading 'To Kill a Mockingbird' by Harper Lee.");
+            } else if (input.includes('movie')) {
+                respond("I recommend watching 'Inception' directed by Christopher Nolan.");
+            } else if (input.includes('music')) {
+                respond("I recommend listening to 'Bohemian Rhapsody' by Queen.");
+            } else if (input.includes('travel')) {
+                respond("I recommend visiting Kyoto, Japan for its beautiful temples and gardens.");
+            } else {
+                respond("I can recommend books, movies, music, and travel destinations. What would you like?");
+            }
+        }
+
+        // Respond to user input
+        function respond(message) {
+            displayMessage(message, 'bot');
+        }
+
+        // Profile management
+        function displayProfile() {
+            respond(`Here's your profile:
+                    Name: ${userProfile.name || 'Not set'}
+                    Location: ${userProfile.location || 'Not set'}
+                    Age: ${userProfile.age || 'Not set'}
+                    Phone Number: ${userProfile.phoneNumber || 'Not set'}
+                    `);
+        }
+
+        function setName(input) {
+            const name = input.replace('set my name to', '').trim();
+            userProfile.name = name;
+            respond(`Got it! I've set your name to ${name}.`);
+        }
+
+        function setLocation(input) {
+            const location = input.replace('set my location to', '').trim();
+            userProfile.location = location;
+            respond(`Got it! I've set your location to ${location}.`);
+        }
+
+        function setAge(input) {
+            const age = input.replace('set my age to', '').trim();
+            userProfile.age = age;
+            respond(`Got it! I've set your age to ${age}.`);
+        }
+
+        function setPhoneNumber(input) {
+            const phoneNumber = input.replace('set my phone number to', '').trim();
+            userProfile.phoneNumber = phoneNumber;
+            respond(`Got it! I've set your phone number to ${phoneNumber}.`);
+        }
+
+        // Reminders
+        function displayReminders() {
+            if (reminders.length === 0) {
+                respond("You don't have any reminders.");
+            } else {
+                respond(`Here are your reminders:\n${reminders.join('\n')}`);
+            }
+        }
+
+        function removeReminder(input) {
+            const reminderToRemove = input.replace('remove reminder', '').trim();
+            reminders = reminders.filter(reminder => reminder !== reminderToRemove);
+            respond(`Reminder removed: ${reminderToRemove}`);
+        }
+    </script>
+</body>
+</html>
