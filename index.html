@@ -226,7 +226,7 @@
 
         // Fetch the weather
         function getWeather(input) {
-            const location = input.replace('weather in', '').trim() || 'New York';
+            const location = input.replace('weather in', '').trim() || 'Bangalore';
             fetch(`https://api.openweathermap.org/data/2.5/weather?q=${location}&appid=${WEATHER_API_KEY}&units=metric`)
                 .then(response => response.json())
                 .then(data => {
