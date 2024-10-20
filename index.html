@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chatbot - FlappyAI</title>
-    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <title>FlappyAI</title>
+    <link rel="icon" href="C:/Users/pande/OneDrive/Desktop/Files/Pics & Videos/Pictures/Sam Pics/Logo - Profile Pic/FlappyAi.jpeg" type="image/jpeg">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -161,17 +161,17 @@
                 getNews(input);
             } else if (input.includes('weather')) {
                 getWeather(input);
-            } else if (input.includes('tell me a story')) {
+            } else if (input.includes('tell a story')) {
                 tellStory();
             } else if (input.includes('my profile')) {
                 displayProfile();
-            } else if (input.includes('set my name to')) {
+            } else if (input.includes('set my name as')) {
                 setName(input);
-            } else if (input.includes('set my location to')) {
+            } else if (input.includes('set my location as')) {
                 setLocation(input);
-            } else if (input.includes('set my age to')) {
+            } else if (input.includes('set my age as')) {
                 setAge(input);
-            } else if (input.includes('set my phone number to')) {
+            } else if (input.includes('set my phone number as')) {
                 setPhoneNumber(input);
             } else if (input.includes('play a game')) {
                 playGame();
@@ -211,7 +211,6 @@
             if (input.includes('category')) {
                 query = input.replace('news in category', '').trim();
             }
-
             fetch(`https://newsapi.org/v2/top-headlines?country=us&category=${query}&apiKey=${NEWS_API_KEY}`)
                 .then(response => response.json())
                 .then(data => {
@@ -226,7 +225,24 @@
 
         // Fetch the weather
         function getWeather(input) {
-            const location = input.replace('weather in', '').trim() || 'Bangalore';
+            // Clean and process the input
+            let location = "";
+
+            // Check if the input contains "what is the weather in" or "weather in"
+            if (input.includes('what is the weather in')) {
+                location = input.replace('what is the weather in', '').trim();
+            } else if (input.includes('weather in')) {
+                location = input.replace('weather in', '').trim();
+            } else {
+                location = "Bangalore"; // Default location if no valid input
+            }
+
+            // If no location is provided after stripping, set default
+            if (!location) {
+                location = "Bangalore"; // Default location
+            }
+
+            // Fetch weather data from OpenWeather API
             fetch(`https://api.openweathermap.org/data/2.5/weather?q=${location}&appid=${WEATHER_API_KEY}&units=metric`)
                 .then(response => response.json())
                 .then(data => {
@@ -243,11 +259,10 @@
         // Tell a story
         function tellStory() {
             const story = `
-                        Once upon a time, in a small village, there were two friends, John and Sarah.
-                        They loved to explore the nearby forest. One day, they found a magical tree that granted them a wish.
-                        They wished for happiness for their village, and from that day on, everyone lived in peace and harmony.
-                        The moral of the story is: Happiness comes when you share joy with others.
-                    `;
+                                Once upon a time, in a small village, there were two friends, John and Sarah. They loved to explore the nearby forest. One day, they found a magical tree that granted them a wish. They wished for happiness for their village, and from that day on, everyone lived in peace and harmony.
+
+                                The moral of the story is: Happiness comes when you share joy with others.
+                            `;
             respond(story);
         }
 
@@ -327,8 +342,12 @@
         function tellJoke() {
             const jokes = [
                 "Why don't scientists trust atoms? Because they make up everything!",
-                "What do you call fake spaghetti? An impasta!",
-                "Why did the scarecrow win an award? Because he was outstanding in his field!"
+                "Parallel lines have so much in common. It’s a shame they’ll never meet.",
+                "I told my wife she was drawing her eyebrows too high. She looked surprised.",
+                "I'm reading a book on anti-gravity. It's impossible to put down!",
+                "Why did the bicycle fall over? Because it was two-tired!",
+                "Why did the scarecrow win an award? Because he was outstanding in his field!",
+                "Did you hear about the mathematician who’s afraid of negative numbers? He’ll stop at nothing to avoid them."
             ];
             const randomJoke = jokes[Math.floor(Math.random() * jokes.length)];
             respond(randomJoke);
@@ -338,8 +357,15 @@
         function tellFact() {
             const facts = [
                 "Honey never spoils. Archaeologists have found pots of honey in ancient Egyptian tombs that are over 3,000 years old and still perfectly edible.",
-                "A group of flamingos is called a 'flamboyance'.",
-                "Octopuses have three hearts. Two pump blood to the gills, while the third pumps it to the rest of the body."
+                "A day on Venus is longer than a year on Venus. It takes Venus longer to rotate once on its axis than to complete one orbit of the Sun.",
+                "Octopuses have three hearts. Two pump blood to the gills, while the third pumps it to the rest of the body.",
+                "Bananas are berries, but strawberries aren't. In botanical terms, a berry is a fruit produced from the ovary of a single flower with seeds embedded in the flesh.",
+                "There are more stars in the universe than grains of sand on all the world's beaches.",
+                "The shortest war in history was between Britain and Zanzibar on August 27, 1896. Zanzibar surrendered after 38 minutes.",
+                "The human brain can read up to 1,000 words per minute.",
+                "The unicorn is the national animal of Scotland.",
+                "The longest wedding veil was longer than 63 football fields.",
+                "The electric chair was invented by a dentist."
             ];
             const randomFact = facts[Math.floor(Math.random() * facts.length)];
             respond(randomFact);
@@ -368,11 +394,11 @@
         // Profile management
         function displayProfile() {
             respond(`Here's your profile:
-                    Name: ${userProfile.name || 'Not set'}
-                    Location: ${userProfile.location || 'Not set'}
-                    Age: ${userProfile.age || 'Not set'}
-                    Phone Number: ${userProfile.phoneNumber || 'Not set'}
-                    `);
+                            Name: ${userProfile.name || 'Not set'}
+                            Location: ${userProfile.location || 'Not set'}
+                            Age: ${userProfile.age || 'Not set'}
+                            Phone Number: ${userProfile.phoneNumber || 'Not set'}
+                            `);
         }
 
         function setName(input) {
